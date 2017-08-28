@@ -36,7 +36,7 @@ router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 
 urlpatterns = [
-    url(r'^', include(router.urls)),
-    url(r'^pandameta-api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    url(r'^pandameta-admin/', admin.site.urls),
+    url(r'^api/', include(router.urls)),
+    url(r'^api/pandameta-api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r'^api/pandameta-admin/', admin.site.urls),
 ]

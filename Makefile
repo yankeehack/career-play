@@ -13,14 +13,19 @@ create-bucket:
 build:
 	docker build -t gcr.io/$(GCLOUD_PROJECT)/career -f Dockerfiles/Dockerfile .
 
+.PHONY: build_react
+build_react:
+	cd clientCode && docker build -t gcr.io/$(GCLOUD_PROJECT)/career-react .
+
 .PHONY: build_nginx
 build_nginx:
 	docker build -t gcr.io/$(GCLOUD_PROJECT)/career-nginx -f Dockerfiles/Dockerfile.nginx .
 
 .PHONY: push
-push: build build_nginx
+push: build build_nginx build_react
 	gcloud docker -- push gcr.io/$(GCLOUD_PROJECT)/career
 	gcloud docker -- push gcr.io/$(GCLOUD_PROJECT)/career-nginx
+	gcloud docker -- push gcr.io/$(GCLOUD_PROJECT)/career-react
 
 .PHONY: asset_sync
 asset_sync:

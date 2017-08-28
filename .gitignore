@@ -1,4 +1,5 @@
 db.sqlite3
 career-templated.yaml
 clientCode/node_modules/
+clientCode/build/
 .idea/
