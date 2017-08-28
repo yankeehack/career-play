@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+echo "== Migrate DB =="
+python manage.py migrate
+
+echo "== Start Server on guni=="
+gunicorn -w 2 -b :8000 career.wsgi

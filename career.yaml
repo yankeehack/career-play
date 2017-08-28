@@ -1,0 +1,111 @@
+# [START kubernetes_deployment]
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: career
+  labels:
+    app: career
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: career
+    spec:
+      containers:
+      - name: career-app
+        # Replace  with your project ID or use `make template`
+        image: gcr.io/$GCLOUD_PROJECT/career
+        # This setting makes nodes pull the docker image every time before
+        # starting the pod. This is useful when debugging, but should be turned
+        # off in production.
+        imagePullPolicy: Always
+        env:
+            # [START cloudsql_secrets]
+            - name: DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-db-credentials
+                  key: username
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-db-credentials
+                  key: password
+
+            - name: CAREER_ENV
+              value: "prod"
+            # [END cloudsql_secrets]
+        ports:
+        - containerPort: 8000
+
+# Nginx image
+      - name: career-nginx
+          # Replace  with your project ID or use `make template`
+        image: gcr.io/$GCLOUD_PROJECT/career-nginx
+        # This setting makes nodes pull the docker image every time before
+        # starting the pod. This is useful when debugging, but should be turned
+        # off in production.
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+
+# node js image
+
+#Enable Connection To SQL
+
+      # [START proxy_container this to enable connect app to googlesql]
+      - image: b.gcr.io/cloudsql-docker/gce-proxy:1.09
+        name: cloudsql-proxy
+        command: ["/cloud_sql_proxy", "--dir=/cloudsql",
+                  "-instances=$GCLOUD_SQL_CONNECTION=tcp:5432",
+                  "-credential_file=/secrets/cloudsql/credentials.json"]
+        volumeMounts:
+          - name: cloudsql-instance-credentials
+            mountPath: /secrets/cloudsql
+            readOnly: true
+          - name: ssl-certs
+            mountPath: /etc/ssl/certs
+          - name: cloudsql
+            mountPath: /cloudsql
+      # [END proxy_container]
+      # [START volumes]
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-instance-credentials
+        - name: ssl-certs
+          hostPath:
+            path: /etc/ssl/certs
+        - name: cloudsql
+          emptyDir:
+      # [END volumes]
+#Enable Connection To SQL
+
+# [END kubernetes_deployment]
+
+---
+
+# [START service]
+# The polls service provides a load-balancing proxy over the polls app
+# pods. By specifying the type as a 'LoadBalancer', Container Engine will
+# create an external HTTP load balancer.
+# For more information about Services see:
+#   https://cloud.google.com/container-engine/docs/services/
+# For more information about external HTTP load balancing see:
+#   https://cloud.google.com/container-engine/docs/load-balancer
+apiVersion: v1
+kind: Service
+metadata:
+  name: career
+  labels:
+    app: career
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 104.198.212.84
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: career
+# [END service]
